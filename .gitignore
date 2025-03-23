@@ -1,3 +1,11 @@
 *.db
 *.pptx
 __pycache__
+/.idea/.gitignore
+/.idea/deployment.xml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/inspectionProfiles/profiles_settings.xml
+/.idea/inspectionProfiles/Project_Default.xml
+/.idea/secure-coding.iml
+/.idea/vcs.xml
