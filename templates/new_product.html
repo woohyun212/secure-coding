@@ -3,10 +3,11 @@
 {% block content %}
 <h2>상품 등록</h2>
 <form method="post">
-  제목: <input type="text" name="title" required><br>
+  {{ form.hidden_tag() }}
+  제목: {{ form.title(size=40) }}<br>
   설명: <br>
-  <textarea name="description" rows="4" cols="50" required></textarea><br>
-  가격: <input type="text" name="price" required><br>
+  {{ form.description(rows=4, cols=50) }}<br>
+  가격: {{ form.price(size=20) }}<br>
   <button type="submit">등록하기</button>
 </form>
 {% endblock %}
