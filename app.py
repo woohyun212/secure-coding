@@ -1,19 +1,28 @@
+# app.py
 import sqlite3
 import uuid
 from flask import Flask, render_template, request, redirect, url_for, session, flash, g
 from flask_socketio import SocketIO, send
 from flask_bcrypt import Bcrypt
+from flask_wtf import CSRFProtect
 import re
+from forms import RegisterForm, LoginForm, BioForm, ProductForm, ReportForm
 
+# app 설정 이후에 추가
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
-app.config['SECRET_KEY'] = 'secret!'
-DATABASE = 'market.db'
 socketio = SocketIO(app)
+csrf = CSRFProtect(app)
+
+app.config['SECRET_KEY'] = 'secret!'
+# app.config['WTF_CSRF_TIME_LIMIT'] = 300# 5분 후 만료
 
 
-USERNAME_REGEX = re.compile(r'^[a-zA-Z0-9_]{4,20}$')
-PASSWORD_REGEX = re.compile(r'^[a-zA-Z0-9@#$%^&+=]{8,}$')  # 심화: 영문/숫자 모두 포함 검증 추가 가능
+DATABASE = 'market.db'
+
+# USERNAME_REGEX = re.compile(r'^[a-zA-Z0-9_]{4,20}$')
+# PASSWORD_REGEX = re.compile(r'^[a-zA-Z0-9@#$%^&+=]{8,}$')  # 심화: 영문/숫자 모두 포함 검증 추가 가능
+
 
 # 데이터베이스 연결 관리: 요청마다 연결 생성 후 사용, 종료 시 close
 def get_db():
@@ -23,11 +32,13 @@ def get_db():
         db.row_factory = sqlite3.Row  # 결과를 dict처럼 사용하기 위함
     return db
 
+
 @app.teardown_appcontext
 def close_connection(exception):
     db = getattr(g, '_database', None)
     if db is not None:
         db.close()
+
 
 # 테이블 생성 (최초 실행 시에만)
 def init_db():
@@ -64,6 +75,7 @@ def init_db():
         """)
         db.commit()
 
+
 # 기본 라우트
 @app.route('/')
 def index():
@@ -71,21 +83,14 @@ def index():
         return redirect(url_for('dashboard'))
     return render_template('index.html')
 
+
 # 회원가입
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-
-        # 입력값 검증
-        if not USERNAME_REGEX.match(username):
-            flash('사용자명은 영문, 숫자, 밑줄(_) 포함 4~20자여야 합니다.')
-            return redirect(url_for('register'))
-
-        if not PASSWORD_REGEX.match(password):
-            flash('비밀번호는 8자 이상이며 영문자 또는 숫자/특수문자를 포함해야 합니다.')
-            return redirect(url_for('register'))
+    form = RegisterForm()
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
 
         db = get_db()
         cursor = db.cursor()
@@ -101,14 +106,16 @@ def register():
         db.commit()
         flash('회원가입이 완료되었습니다. 로그인 해주세요.')
         return redirect(url_for('login'))
-    return render_template('register.html')
+    return render_template('register.html', form=form)
+
 
 # 로그인
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+    form = LoginForm()
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
         db = get_db()
         cursor = db.cursor()
         cursor.execute("SELECT * FROM user WHERE username = ?", (username,))
@@ -120,7 +127,8 @@ def login():
         else:
             flash('아이디 또는 비밀번호가 올바르지 않습니다.')
             return redirect(url_for('login'))
-    return render_template('login.html')
+    return render_template('login.html', form=form)
+
 
 # 로그아웃
 @app.route('/logout')
@@ -128,6 +136,7 @@ def logout():
     session.pop('user_id', None)
     flash('로그아웃되었습니다.')
     return redirect(url_for('index'))
+
 
 # 대시보드: 사용자 정보와 전체 상품 리스트 표시
 @app.route('/dashboard')
@@ -144,32 +153,36 @@ def dashboard():
     all_products = cursor.fetchall()
     return render_template('dashboard.html', products=all_products, user=current_user)
 
+
 # 프로필 페이지: bio 업데이트 가능
 @app.route('/profile', methods=['GET', 'POST'])
 def profile():
     if 'user_id' not in session:
         return redirect(url_for('login'))
+    form = BioForm()
     db = get_db()
     cursor = db.cursor()
-    if request.method == 'POST':
-        bio = request.form.get('bio', '')
+    if form.validate_on_submit():
+        bio = form.bio.data
         cursor.execute("UPDATE user SET bio = ? WHERE id = ?", (bio, session['user_id']))
         db.commit()
         flash('프로필이 업데이트되었습니다.')
         return redirect(url_for('profile'))
     cursor.execute("SELECT * FROM user WHERE id = ?", (session['user_id'],))
     current_user = cursor.fetchone()
-    return render_template('profile.html', user=current_user)
+    return render_template('profile.html', user=current_user, form=form)
+
 
 # 상품 등록
 @app.route('/product/new', methods=['GET', 'POST'])
 def new_product():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    if request.method == 'POST':
-        title = request.form['title']
-        description = request.form['description']
-        price = request.form['price']
+    form = ProductForm()
+    if form.validate_on_submit():
+        title = form.title.data
+        description = form.description.data
+        price = form.price.data
         db = get_db()
         cursor = db.cursor()
         product_id = str(uuid.uuid4())
@@ -180,7 +193,8 @@ def new_product():
         db.commit()
         flash('상품이 등록되었습니다.')
         return redirect(url_for('dashboard'))
-    return render_template('new_product.html')
+    return render_template('new_product.html', form=form)
+
 
 # 상품 상세보기
 @app.route('/product/<product_id>')
@@ -197,14 +211,16 @@ def view_product(product_id):
     seller = cursor.fetchone()
     return render_template('view_product.html', product=product, seller=seller)
 
+
 # 신고하기
 @app.route('/report', methods=['GET', 'POST'])
 def report():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    if request.method == 'POST':
-        target_id = request.form['target_id']
-        reason = request.form['reason']
+    form = ReportForm()
+    if form.validate_on_submit():
+        target_id = form.target_id.data
+        reason = form.reason.data
         db = get_db()
         cursor = db.cursor()
         report_id = str(uuid.uuid4())
@@ -215,13 +231,15 @@ def report():
         db.commit()
         flash('신고가 접수되었습니다.')
         return redirect(url_for('dashboard'))
-    return render_template('report.html')
+    return render_template('report.html', form=form)
+
 
 # 실시간 채팅: 클라이언트가 메시지를 보내면 전체 브로드캐스트
 @socketio.on('send_message')
 def handle_send_message_event(data):
     data['message_id'] = str(uuid.uuid4())
     send(data, broadcast=True)
+
 
 if __name__ == '__main__':
     init_db()  # 앱 컨텍스트 내에서 테이블 생성
