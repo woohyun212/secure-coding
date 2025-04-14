@@ -2,11 +2,18 @@ import sqlite3
 import uuid
 from flask import Flask, render_template, request, redirect, url_for, session, flash, g
 from flask_socketio import SocketIO, send
+from flask_bcrypt import Bcrypt
+import re
 
 app = Flask(__name__)
+bcrypt = Bcrypt(app)
 app.config['SECRET_KEY'] = 'secret!'
 DATABASE = 'market.db'
 socketio = SocketIO(app)
+
+
+USERNAME_REGEX = re.compile(r'^[a-zA-Z0-9_]{4,20}$')
+PASSWORD_REGEX = re.compile(r'^[a-zA-Z0-9@#$%^&+=]{8,}$')  # 심화: 영문/숫자 모두 포함 검증 추가 가능
 
 # 데이터베이스 연결 관리: 요청마다 연결 생성 후 사용, 종료 시 close
 def get_db():
@@ -70,16 +77,27 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+
+        # 입력값 검증
+        if not USERNAME_REGEX.match(username):
+            flash('사용자명은 영문, 숫자, 밑줄(_) 포함 4~20자여야 합니다.')
+            return redirect(url_for('register'))
+
+        if not PASSWORD_REGEX.match(password):
+            flash('비밀번호는 8자 이상이며 영문자 또는 숫자/특수문자를 포함해야 합니다.')
+            return redirect(url_for('register'))
+
         db = get_db()
         cursor = db.cursor()
-        # 중복 사용자 체크
         cursor.execute("SELECT * FROM user WHERE username = ?", (username,))
         if cursor.fetchone() is not None:
             flash('이미 존재하는 사용자명입니다.')
             return redirect(url_for('register'))
+
         user_id = str(uuid.uuid4())
+        hashed_pw = bcrypt.generate_password_hash(password).decode('utf-8')  # 해시 적용 포함
         cursor.execute("INSERT INTO user (id, username, password) VALUES (?, ?, ?)",
-                       (user_id, username, password))
+                       (user_id, username, hashed_pw))
         db.commit()
         flash('회원가입이 완료되었습니다. 로그인 해주세요.')
         return redirect(url_for('login'))
@@ -93,9 +111,9 @@ def login():
         password = request.form['password']
         db = get_db()
         cursor = db.cursor()
-        cursor.execute("SELECT * FROM user WHERE username = ? AND password = ?", (username, password))
+        cursor.execute("SELECT * FROM user WHERE username = ?", (username,))
         user = cursor.fetchone()
-        if user:
+        if user and bcrypt.check_password_hash(user['password'], password, ):
             session['user_id'] = user['id']
             flash('로그인 성공!')
             return redirect(url_for('dashboard'))
