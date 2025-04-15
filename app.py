@@ -6,10 +6,12 @@ from flask_socketio import SocketIO, send
 from flask_bcrypt import Bcrypt
 from flask_wtf import CSRFProtect
 from forms import RegisterForm, LoginForm, BioForm, ProductForm, ReportForm
-from datetime import timedelta
+from datetime import timedelta, datetime  # 추가된 import
 import time  # 추가된 import
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+
+login_failures = {}  # key = IP, value = {"count": int, "last_attempt": datetime}
 
 # app 설정 이후에 추가
 app = Flask(__name__)
@@ -26,9 +28,11 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True  # 기본적으로 True 지만 명�
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 app.permanent_session_lifetime = timedelta(minutes=30)
 
+
 @app.before_request
 def make_session_permanent():
     session.permanent = True
+
 
 DATABASE = 'market.db'
 
@@ -94,6 +98,7 @@ def index():
 
 
 # 회원가입
+# TODO: 여기도 RateLimit 걸어야 함.
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
@@ -120,12 +125,26 @@ def register():
 
 # 로그인
 @app.route('/login', methods=['GET', 'POST'])
-@limiter.limit("5 per minute")
+@limiter.limit("5 per minute", methods=["POST"])
 def login():
     form = LoginForm()
+    client_ip = request.remote_addr
+    now = datetime.now()
+
+    # get or initialize failure info
+    failure = login_failures.get(client_ip, {"count": 0, "last_attempt": now})
+    elapsed = (now - failure["last_attempt"]).total_seconds()
+
+    # reset failure count after 5 minutes
+    if elapsed > 300:
+        failure = {"count": 0, "last_attempt": now}
+
+    # block login if 5 or more failed attempts within 5 minutes
+    if failure["count"] >= 5:
+        flash('5회 이상 로그인 실패로 잠시 차단되었습니다. 잠시 후 다시 시도해주세요.')
+        return redirect(url_for('login'))
 
     if form.validate_on_submit():
-
         username = form.username.data
         password = form.password.data
         db = get_db()
@@ -135,8 +154,12 @@ def login():
         if user and bcrypt.check_password_hash(user['password'], password):
             session['user_id'] = user['id']
             flash('로그인 성공!')
+            login_failures.pop(client_ip, None)  # Reset failure count on successful login
             return redirect(url_for('dashboard'))
         else:
+            failure["count"] += 1
+            failure["last_attempt"] = now
+            login_failures[client_ip] = failure
             flash('아이디 또는 비밀번호가 올바르지 않습니다.')
             return redirect(url_for('login'))
     return render_template('login.html', form=form)
