@@ -7,10 +7,12 @@ from flask_bcrypt import Bcrypt
 from flask_wtf import CSRFProtect
 from forms import RegisterForm, LoginForm, BioForm, ProductForm, ReportForm
 from datetime import timedelta, datetime  # 추가된 import
-import time  # 추가된 import
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 login_failures = {}  # key = IP, value = {"count": int, "last_attempt": datetime}
 
 # app 설정 이후에 추가
@@ -20,13 +22,15 @@ socketio = SocketIO(app)
 csrf = CSRFProtect(app)
 limiter = Limiter(get_remote_address, app=app)
 
-app.config['SECRET_KEY'] = 'secret!'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # 기본적으로 True 지만 명시적 설정
-# app.config['SESSION_COOKIE_SECURE'] = True  # only in HTTPS production
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', 'False') == 'True'
+app.config['DEBUG'] = os.environ.get('FLASK_DEBUG', 'False') == 'True'
 # app.config['WTF_CSRF_TIME_LIMIT'] = 300 # CSRF 토큰 5분 후 만료
-
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 app.permanent_session_lifetime = timedelta(minutes=30)
+
+
 
 
 @app.before_request
@@ -98,7 +102,7 @@ def index():
 
 
 # 회원가입
-# TODO: 여기도 RateLimit 걸어야 함.
+@limiter.limit("3 per minute", methods=["POST"])
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
@@ -125,7 +129,6 @@ def register():
 
 # 로그인
 @app.route('/login', methods=['GET', 'POST'])
-@limiter.limit("5 per minute", methods=["POST"])
 def login():
     form = LoginForm()
     client_ip = request.remote_addr
@@ -140,7 +143,7 @@ def login():
         failure = {"count": 0, "last_attempt": now}
 
     # block login if 5 or more failed attempts within 5 minutes
-    if failure["count"] >= 5:
+    if request.method == "POST" and failure["count"] >= 5:
         flash('5회 이상 로그인 실패로 잠시 차단되었습니다. 잠시 후 다시 시도해주세요.')
         return redirect(url_for('login'))
 
@@ -278,4 +281,4 @@ def handle_send_message_event(data):
 
 if __name__ == '__main__':
     init_db()  # 앱 컨텍스트 내에서 테이블 생성
-    socketio.run(app, debug=True, host='0.0.0.0')
+    socketio.run(app, debug=app.config['DEBUG'], host='0.0.0.0')
