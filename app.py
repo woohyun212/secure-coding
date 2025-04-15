@@ -6,6 +6,7 @@ from flask_socketio import SocketIO, send
 from flask_bcrypt import Bcrypt
 from flask_wtf import CSRFProtect
 from forms import RegisterForm, LoginForm, BioForm, ProductForm, ReportForm
+from datetime import timedelta
 
 # app 설정 이후에 추가
 app = Flask(__name__)
@@ -15,14 +16,16 @@ csrf = CSRFProtect(app)
 
 app.config['SECRET_KEY'] = 'secret!'
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # 기본적으로 True 지만 명시적 설정
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
+app.permanent_session_lifetime = timedelta(minutes=30)
 # app.config['SESSION_COOKIE_SECURE'] = True  # only in HTTPS production
 # app.config['WTF_CSRF_TIME_LIMIT'] = 300 # CSRF 토큰 5분 후 만료
 
+@app.before_request
+def make_session_permanent():
+    session.permanent = True
 
 DATABASE = 'market.db'
-
-# USERNAME_REGEX = re.compile(r'^[a-zA-Z0-9_]{4,20}$')
-# PASSWORD_REGEX = re.compile(r'^[a-zA-Z0-9@#$%^&+=]{8,}$')  # 심화: 영문/숫자 모두 포함 검증 추가 가능
 
 
 # 데이터베이스 연결 관리: 요청마다 연결 생성 후 사용, 종료 시 close
