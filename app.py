@@ -5,7 +5,6 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask_socketio import SocketIO, send
 from flask_bcrypt import Bcrypt
 from flask_wtf import CSRFProtect
-import re
 from forms import RegisterForm, LoginForm, BioForm, ProductForm, ReportForm
 
 # app 설정 이후에 추가
@@ -15,7 +14,9 @@ socketio = SocketIO(app)
 csrf = CSRFProtect(app)
 
 app.config['SECRET_KEY'] = 'secret!'
-# app.config['WTF_CSRF_TIME_LIMIT'] = 300# 5분 후 만료
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # 기본적으로 True 지만 명시적 설정
+# app.config['SESSION_COOKIE_SECURE'] = True  # only in HTTPS production
+# app.config['WTF_CSRF_TIME_LIMIT'] = 300 # CSRF 토큰 5분 후 만료
 
 
 DATABASE = 'market.db'
