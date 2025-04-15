@@ -7,19 +7,24 @@ from flask_bcrypt import Bcrypt
 from flask_wtf import CSRFProtect
 from forms import RegisterForm, LoginForm, BioForm, ProductForm, ReportForm
 from datetime import timedelta
+import time  # 추가된 import
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 # app 설정 이후에 추가
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
 socketio = SocketIO(app)
 csrf = CSRFProtect(app)
+limiter = Limiter(get_remote_address, app=app)
 
 app.config['SECRET_KEY'] = 'secret!'
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # 기본적으로 True 지만 명시적 설정
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
-app.permanent_session_lifetime = timedelta(minutes=30)
 # app.config['SESSION_COOKIE_SECURE'] = True  # only in HTTPS production
 # app.config['WTF_CSRF_TIME_LIMIT'] = 300 # CSRF 토큰 5분 후 만료
+
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
+app.permanent_session_lifetime = timedelta(minutes=30)
 
 @app.before_request
 def make_session_permanent():
@@ -115,16 +120,19 @@ def register():
 
 # 로그인
 @app.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
 def login():
     form = LoginForm()
+
     if form.validate_on_submit():
+
         username = form.username.data
         password = form.password.data
         db = get_db()
         cursor = db.cursor()
         cursor.execute("SELECT * FROM user WHERE username = ?", (username,))
         user = cursor.fetchone()
-        if user and bcrypt.check_password_hash(user['password'], password, ):
+        if user and bcrypt.check_password_hash(user['password'], password):
             session['user_id'] = user['id']
             flash('로그인 성공!')
             return redirect(url_for('dashboard'))
