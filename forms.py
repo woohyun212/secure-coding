@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, TextAreaField
-from wtforms.validators import InputRequired, Length, Regexp
+from wtforms.validators import InputRequired, Length, Regexp, DataRequired, EqualTo
 
 class RegisterForm(FlaskForm):
     username = StringField('Username', validators=[
@@ -28,3 +28,14 @@ class ProductForm(FlaskForm):
 class ReportForm(FlaskForm):
     target_id = StringField('Target ID', validators=[InputRequired()])
     reason = TextAreaField('Reason', validators=[InputRequired()])
+
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField('현재 비밀번호', validators=[DataRequired()])
+    new_password = PasswordField(
+        '새 비밀번호',
+        validators=[
+            DataRequired(),
+            EqualTo('confirm_new_password', message='비밀번호가 일치하지 않습니다.')
+        ]
+    )
+    confirm_new_password = PasswordField('비밀번호 확인', validators=[DataRequired()])

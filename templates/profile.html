@@ -3,10 +3,23 @@
 {% block content %}
 <h2>프로필 관리</h2>
 <p>사용자명: {{ user.username }}</p>
+
+<!-- Bio update form -->
 <form method="post">
   {{ form.hidden_tag() }}
-  소개글: <br>
-  {{ form.bio(rows=4, cols=50) }}<br>
-  <button type="submit">프로필 업데이트</button>
+  <p>소개글:</p>
+  <p>{{ form.bio(rows=4, cols=50) }}</p>
+  <p><button type="submit" name="bio_submit">프로필 업데이트</button></p>
+</form>
+
+<hr>
+
+<!-- Password change form -->
+<form method="post" action="{{ url_for('user.change_password') }}">
+  {{ pwd_form.hidden_tag() }}
+  <p>현재 비밀번호:<br>{{ pwd_form.current_password(size=32) }}</p>
+  <p>새 비밀번호:<br>{{ pwd_form.new_password(size=32) }}</p>
+  <p>비밀번호 확인:<br>{{ pwd_form.confirm_new_password(size=32) }}</p>
+  <p><button type="submit" name="pwd_submit">비밀번호 변경</button></p>
 </form>
 {% endblock %}
