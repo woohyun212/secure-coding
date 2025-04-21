@@ -1,3 +1,4 @@
+# db.py
 import sqlite3
 from flask import g, current_app
 
@@ -42,6 +43,15 @@ def init_db():
                 reporter_id TEXT NOT NULL,
                 target_id TEXT NOT NULL,
                 reason TEXT NOT NULL
+            )
+        """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS message (
+                id TEXT PRIMARY KEY,
+                sender_id TEXT NOT NULL,
+                recipient_id TEXT,
+                content TEXT NOT NULL,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
         db.commit()

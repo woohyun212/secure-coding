@@ -7,13 +7,10 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 from db import init_db, close_connection
-from socketio_handlers import handle_send_message_event
+# from socketio_handlers import handle_send_message_event
+import socketio_handlers
 
-# 변경 후
-from routes.auth import auth
-from routes.user import user
-from routes.product import product
-from routes.report import report
+from routes import *
 
 from datetime import timedelta
 import os
@@ -34,7 +31,10 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 
 app.teardown_appcontext(close_connection)
 # socket
-socketio.on_event('send_message', handle_send_message_event)
+
+socketio.on_event('send_message',    socketio_handlers.handle_send_message_event)
+socketio.on_event('join',            socketio_handlers.handle_join)
+socketio.on_event('private_message', socketio_handlers.handle_private_message_event)
 
 # routes
 app.register_blueprint(auth)
@@ -42,10 +42,7 @@ app.register_blueprint(user)
 app.register_blueprint(product)
 app.register_blueprint(report)
 
-
-
-
-
+app.register_blueprint(chat)
 
 @app.before_request
 def make_session_permanent():

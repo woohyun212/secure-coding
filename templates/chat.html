@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}채팅 - {{ recipient_username }}{% endblock %}
+{% block content %}
+<h2>채팅 with {{ recipient_username }}</h2>
+<div id="chat-window" style="border:1px solid #ccc; height:400px; overflow-y:scroll; padding:10px;"></div>
+<form id="chat-form" style="margin-top:10px;">
+  <input type="text" id="message-input" placeholder="메시지를 입력하세요" style="width:80%;" autocomplete="off"/>
+  <button type="submit">전송</button>
+</form>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+(function(){
+  var socket = io();
+  var currentUserId = "{{ session['user_id'] }}";
+  var recipientId = "{{ recipient_id }}";
+  var recipientUsername = "{{ recipient_username }}";
+
+  // Join personal room for private messages
+  socket.emit('join', {user_id: currentUserId});
+
+  // Append message to chat window
+  function appendMessage(data){
+    var chatWindow = document.getElementById('chat-window');
+    var msgElem = document.createElement('div');
+    var prefix;
+    if (data.sender_id === currentUserId) {
+      prefix = '나: ';
+    } else if (data.sender_id === recipientId) {
+      prefix = recipientUsername + ': ';
+    } else {
+      // Third-party message: show a notification
+        console.log(data);
+      prefix = "[새로운 메시지 도착] " + data.sender_username + ": ";
+    }
+    msgElem.textContent = prefix + data.content;
+    msgElem.style.margin = '5px 0';
+    if(data.sender_id === currentUserId){
+      //msgElem.style.textAlign = 'right';
+    }
+    chatWindow.appendChild(msgElem);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+
+  // Load chat history via AJAX
+fetch("{{ url_for('chat.chat_history', username=recipient_username) }}")
+    .then(res => res.json())
+    .then(messages => {
+      messages.forEach(m => appendMessage(m));
+    });
+
+  // Listen for incoming broadcast messages
+  socket.on('message', function(data){
+    appendMessage({
+      sender_id: data.sender_id || data.username,
+      sender_username: data.username,
+      content: data.message
+    });
+  });
+
+  // Listen for incoming private messages
+  socket.on('private_message', function(data){
+    appendMessage({sender_id: data.sender_id, content: data.message});
+  });
+
+  // Handle sending new messages
+  document.getElementById('chat-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    var input = document.getElementById('message-input');
+    var msg = input.value.trim();
+    if(!msg) return;
+    socket.emit('private_message', {
+      sender_id: currentUserId,
+      recipient_id: recipientId,
+      message: msg
+    });
+    appendMessage({ sender_id: currentUserId, content: msg });
+    input.value = '';
+  });
+})();
+</script>
+{% endblock %}
