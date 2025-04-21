@@ -4,6 +4,19 @@ from db import get_db
 # Blueprint for chat-related routes
 chat = Blueprint('chat', __name__, url_prefix='/chat')
 
+@chat.route('/')
+def chat_list():
+    # Ensure user is logged in
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login'))
+    db = get_db()
+    cursor = db.cursor()
+    # Fetch all usernames except the current user
+    cursor.execute("SELECT username FROM user WHERE id != ?", (session['user_id'],))
+    rows = cursor.fetchall()
+    users = [row['username'] for row in rows]
+    return render_template('chat_list.html', users=users)
+
 @chat.route('/<username>')
 def chat_with(username):
     # Ensure user is logged in
