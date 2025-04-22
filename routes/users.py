@@ -1,8 +1,10 @@
+# users.py
 from flask import Blueprint, render_template, redirect, url_for, session
 from db import get_db
 from forms import BioForm, ChangePasswordForm
 from flask import flash
 from flask_bcrypt import check_password_hash, generate_password_hash
+from decorators import login_and_active_required
 
 # Blueprint for user-related routes
 user = Blueprint('user', __name__)
@@ -14,9 +16,8 @@ def index():
     return render_template('index.html')
 
 @user.route('/dashboard')
+@login_and_active_required
 def dashboard():
-    if 'user_id' not in session:
-        return redirect(url_for('auth.login'))
     db = get_db()
     cursor = db.cursor()
     cursor.execute("SELECT * FROM user WHERE id = ?", (session['user_id'],))
@@ -26,9 +27,8 @@ def dashboard():
     return render_template('dashboard.html', user=current_user, products=all_products)
 
 @user.route('/profile', methods=['GET', 'POST'])
+@login_and_active_required
 def profile():
-    if 'user_id' not in session:
-        return redirect(url_for('auth.login'))
     db = get_db()
     cursor = db.cursor()
     cursor.execute("SELECT * FROM user WHERE id = ?", (session['user_id'],))
@@ -51,9 +51,8 @@ def profile():
     )
 
 @user.route('/change_password', methods=['POST'])
+@login_and_active_required
 def change_password():
-    if 'user_id' not in session:
-        return redirect(url_for('auth.login'))
     form = ChangePasswordForm()
     db = get_db()
     cursor = db.cursor()
