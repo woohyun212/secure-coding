@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}신고 목록{% endblock %}
+
+{% block content %}
+  <h2>대기 중인 신고 목록</h2>
+
+  {% if reports %}
+    <table style="width: 100%;">
+      <thead>
+        <tr>
+{#          <th>신고 ID</th>#}
+          <th style="white-space: nowrap;">신고자</th>
+          <th>대상</th>
+          <th>사유</th>
+          <th>처리</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in reports %}
+          <tr>
+{#            <td>{{ r.id }}</td>#}
+            <td>{{ r.reporter }}</td>
+            <td>
+              {% if r.target_type == 'user' %}
+                <a href="{{ url_for('user.profile_by_username', username=r.target) }}">{{ r.target }}</a>
+              {% else %}
+                <a href="{{ url_for('product.view_product', product_id=r.target) }}">{{ r.target }}</a>
+              {% endif %}
+            </td>
+            <td>{{ r.reason }}</td>
+            <td >
+              <form method="post" action="{{ url_for('report.process_report', report_id=r.id) }}" style="display:inline; margin-left:8px;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit">처리하기</button>
+              </form>
+              <form method="post" action="{{ url_for('report.ignore_report', report_id=r.id) }}" style="display:inline; margin-left:8px;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit">X</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>대기 중인 신고가 없습니다.</p>
+  {% endif %}
+{% endblock %}

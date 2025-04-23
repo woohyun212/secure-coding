@@ -5,6 +5,20 @@
     <div>
       <h2>{{ user.username }}님 프로필</h2>
     </div>
+    <!-- Toast notification container -->
+    <div id="copy-toast" style="
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 8px 12px;
+        background-color: rgba(0,0,0,0.7);
+        color: #fff;
+        border-radius: 4px;
+        display: none;
+        z-index: 1000;
+      ">
+      복사되었습니다!
+    </div>
     <!-- User search form -->
     <form id="user-search-form"
           onsubmit="event.preventDefault(); window.location.href='/profile/name/' + encodeURIComponent(document.getElementById('user-search-input').value);"
@@ -21,7 +35,18 @@
     </form>
   </div>
   <ul>
-    <li><strong>UUID:</strong> {{ user.id }}</li>
+    <li>
+      <strong>UUID:</strong>
+      <span
+        id="uuid-value"
+        onclick="copyUUID()"
+        style="cursor: pointer; user-select: all;"
+        title="클릭하면 복사됩니다."
+      >
+        {{ user.id }}
+      </span>
+
+    </li>
     <li><strong>소개글:</strong> {{ user.bio or '없음' }}</li>
     <li><strong>상태:</strong> {{ '휴면 상태' if user.is_active == 0 else '활성 상태' }}</li>
   </ul>
@@ -38,4 +63,54 @@
   {% else %}
     <p>등록된 상품이 없습니다.</p>
   {% endif %}
+<script>
+  function copyUUID() {
+    const uuidText = document.getElementById('uuid-value').textContent.trim();
+    // Primary copy method
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(uuidText)
+        .then(showToast)
+        .catch(err => {
+          console.error('클립보드 복사 실패:', err);
+          fallbackCopy(uuidText);
+        });
+    } else {
+      // Fallback for older browsers
+      fallbackCopy(uuidText);
+    }
+
+    function fallbackCopy(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      // Prevent scrolling to bottom
+      textarea.style.position = 'fixed';
+      textarea.style.top = 0;
+      textarea.style.left = 0;
+      textarea.style.width = '1px';
+      textarea.style.height = '1px';
+      textarea.style.padding = 0;
+      textarea.style.border = 'none';
+      textarea.style.outline = 'none';
+      textarea.style.boxShadow = 'none';
+      textarea.style.background = 'transparent';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        showToast();
+      } catch (err) {
+        console.error('fallback: 복사 실패', err);
+      }
+      document.body.removeChild(textarea);
+    }
+
+    function showToast() {
+      const toast = document.getElementById('copy-toast');
+      toast.style.display = 'block';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 2000);
+    }
+  }
+</script>
 {% endblock %}
