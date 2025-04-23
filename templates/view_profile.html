@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}프로필 - {{ user.username }}{% endblock %}
+{% block content %}
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <h2>{{ user.username }}님 프로필</h2>
+    </div>
+    <!-- User search form -->
+    <form id="user-search-form"
+          onsubmit="event.preventDefault(); window.location.href='/profile/name/' + encodeURIComponent(document.getElementById('user-search-input').value);"
+          style="display: flex; gap: 5px;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input
+          type="text"
+          id="user-search-input"
+          placeholder="검색할 사용자명 입력"
+          required
+          style="padding:4px;"
+      />
+      <button type="submit" style="padding:4px;">검색</button>
+    </form>
+  </div>
+  <ul>
+    <li><strong>UUID:</strong> {{ user.id }}</li>
+    <li><strong>소개글:</strong> {{ user.bio or '없음' }}</li>
+    <li><strong>상태:</strong> {{ '휴면 상태' if user.is_active == 0 else '활성 상태' }}</li>
+  </ul>
+  <h3>상품 목록</h3>
+  {% if products %}
+    <ul>
+      {% for product in products %}
+        <li>
+          <a href="{{ url_for('product.view_product', product_id=product.id) }}">{{ product.title }}</a>
+          {% if product.is_active == 0 %}(비활성){% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>등록된 상품이 없습니다.</p>
+  {% endif %}
+{% endblock %}

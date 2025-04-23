@@ -1,8 +1,27 @@
 {% extends "base.html" %}
 {% block title %}프로필{% endblock %}
 {% block content %}
-<h2>프로필 관리</h2>
-<p>사용자명: {{ user.username }}</p>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h2 style="margin: 0;">프로필 관리</h2>
+            <p style="margin: 0;">사용자명: {{ user.username }}</p>
+        </div>
+
+        <!-- User search form -->
+        <form id="user-search-form"
+              onsubmit="event.preventDefault(); window.location.href='/profile/name/' + encodeURIComponent(document.getElementById('user-search-input').value);"
+              style="display: flex; gap: 5px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input
+                    type="text"
+                    id="user-search-input"
+                    placeholder="검색할 사용자명 입력"
+                    required
+                    style="padding:4px;"
+            />
+            <button type="submit" style="padding:4px;">검색</button>
+        </form>
+    </div>
 
 <!-- Bio update form -->
 <form method="post">
