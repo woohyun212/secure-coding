@@ -25,7 +25,9 @@ def init_db():
                 id TEXT PRIMARY KEY,
                 username TEXT UNIQUE NOT NULL,
                 password TEXT NOT NULL,
-                bio TEXT
+                bio TEXT,
+                is_active INTEGER NOT NULL DEFAULT 1,
+                is_admin INTEGER NOT NULL DEFAULT 0
             )
         """)
         cursor.execute("""
@@ -34,7 +36,8 @@ def init_db():
                 title TEXT NOT NULL,
                 description TEXT NOT NULL,
                 price TEXT NOT NULL,
-                seller_id TEXT NOT NULL
+                seller_id TEXT NOT NULL,
+                is_active INTEGER NOT NULL DEFAULT 1
             )
         """)
         cursor.execute("""
@@ -42,7 +45,8 @@ def init_db():
                 id TEXT PRIMARY KEY,
                 reporter_id TEXT NOT NULL,
                 target_id TEXT NOT NULL,
-                reason TEXT NOT NULL
+                reason TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'pending'
             )
         """)
         cursor.execute("""
@@ -54,4 +58,23 @@ def init_db():
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        # Ensure new columns exist when migrating existing DB
+        try:
+            cursor.execute("ALTER TABLE user ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("ALTER TABLE user ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("ALTER TABLE report ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("ALTER TABLE product ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1")
+        except sqlite3.OperationalError:
+            pass
+
         db.commit()
