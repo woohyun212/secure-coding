@@ -15,7 +15,7 @@ def chat_list():
     cursor.execute("SELECT username FROM user WHERE id != ?", (session['user_id'],))
     rows = cursor.fetchall()
     users = [row['username'] for row in rows]
-    return render_template('chat_list.html', users=users)
+    return render_template('chat/chat_list.html', users=users)
 
 @chat.route('/<username>')
 def chat_with(username):
@@ -30,7 +30,7 @@ def chat_with(username):
         flash('존재하지 않는 사용자입니다.', 'danger')
         return redirect(url_for('user.dashboard'))
     recipient_id = row['id']
-    return render_template('chat.html', recipient_id=recipient_id, recipient_username=username)
+    return render_template('chat/chat.html', recipient_id=recipient_id, recipient_username=username)
 
 @chat.route('/history/<username>')
 def chat_history(username):

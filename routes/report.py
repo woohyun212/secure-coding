@@ -38,7 +38,7 @@ def report_list():
             'target_type': target_type,
             'reason': r['reason']
         })
-    return render_template('report_list.html', reports=enriched)
+    return render_template('report/report_list.html', reports=enriched)
 
 @report.route('/process/<report_id>', methods=['POST'])
 @login_and_active_required
@@ -111,4 +111,4 @@ def report_item():
         db.commit()
         flash('신고가 접수되었습니다.', 'success')
         return redirect(url_for('user.dashboard'))
-    return render_template('report.html', form=form)
+    return render_template('report/report.html', form=form)

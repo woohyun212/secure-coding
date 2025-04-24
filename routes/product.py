@@ -22,7 +22,7 @@ def new_product():
         db.commit()
         flash('상품이 등록되었습니다.', 'success')
         return redirect(url_for('user.dashboard'))
-    return render_template('new_product.html', form=form)
+    return render_template('product/new_product.html', form=form)
 
 @product.route('/<product_id>')
 def view_product(product_id):
@@ -35,4 +35,4 @@ def view_product(product_id):
         return redirect(url_for('user.dashboard'))
     cursor.execute("SELECT * FROM user WHERE id = ?", (product_data['seller_id'],))
     seller = cursor.fetchone()
-    return render_template('view_product.html', product=product_data, seller=seller)
+    return render_template('product/view_product.html', product=product_data, seller=seller)

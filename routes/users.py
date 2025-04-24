@@ -43,7 +43,7 @@ def profile():
         return redirect(url_for('user.profile'))
 
     return render_template(
-        'profile.html',
+        'profile/profile.html',
         user=current_user,
         form=form,
         pwd_form=pwd_form
@@ -99,4 +99,4 @@ def view_profile(user_id):
         (user_id,)
     )
     products = cursor.fetchall()
-    return render_template('view_profile.html', user=u, products=products)
+    return render_template('profile/view_profile.html', user=u, products=products)
