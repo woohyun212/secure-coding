@@ -30,7 +30,7 @@
     var item = document.createElement('li');
     item.textContent = data.username + ": " + data.message;
     messages.appendChild(item);
-    window.scrollTo(0, document.body.scrollHeight);
+    messages.scrollTop = messages.scrollHeight;
   });
   function sendMessage() {
     var input = document.getElementById('chat_input');
@@ -38,7 +38,24 @@
     if (message) {
       socket.emit('send_message', { 'username': "{{ user.username }}", 'message': message });
       input.value = "";
+      var messages = document.getElementById('messages');
+      messages.scrollTop = messages.scrollHeight;
     }
   }
+
+  // IME-aware Enter handling for Korean input
+  var isComposing = false;
+  const input = document.getElementById('chat_input');
+  input.addEventListener('compositionstart', function () {
+    isComposing = true;
+  });
+  input.addEventListener('compositionend', function () {
+    isComposing = false;
+  });
+  input.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter' && !isComposing) {
+      sendMessage();
+    }
+  });
 </script>
 {% endblock %}

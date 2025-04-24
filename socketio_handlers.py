@@ -21,7 +21,7 @@ def is_valid_message(message):
         return False, "빈 메시지를 보낼 수 없습니다."
 
     # 반복 문자 검사
-    if re.search(r'(.)\1{4,}', message):
+    if re.search(r'(.)\1{10,}', message):
         return False, "과도한 반복 문자 사용을 자제해주세요."
 
     # 특수문자 연속 사용 검사
