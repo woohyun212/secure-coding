@@ -1,19 +1,20 @@
 {% extends "base.html" %}
 {% block title %}상품 상세보기{% endblock %}
 {% block content %}
-<h2>{{ product.title }}</h2>
-<p>{{ product.description }}</p>
-<p>가격: {{ product.price }}</p>
-<p>판매자: {{ seller.username if seller else '알 수 없음' }}</p>
-{% if seller and seller.id == session['user_id'] %}
-  <p>
-    <form method="get" action="{{ url_for('product.edit_product', product_id=product.id) }}" style="display:inline;">
-      <button type="submit" class="button" style="margin-right: 8px;">수정</button>
-    </form>
-    <form method="post" action="{{ url_for('product.delete_product', product_id=product.id) }}" style="display:inline;" onsubmit="return confirm('정말 삭제하시겠습니까?');">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <button type="submit" class="button" style="background-color:red; color:white;">삭제</button>
-    </form>
-  </p>
-{% endif %}
+    <h2>{{ product.title }}</h2>
+    <p>{{ product.description }}</p>
+    <p>가격: {{ product.price }}</p>
+    <p>판매자: {{ seller.username if seller else '알 수 없음' }}</p>
+    {% if seller and seller.id == session['user_id'] %}
+        <form method="get" action="{{ url_for('product.edit_product', product_id=product.id) }}"
+              style="display:inline;">
+            <button type="submit" class="button" style="margin-right: 8px;">수정</button>
+        </form>
+        <form method="post" action="{{ url_for('product.delete_product', product_id=product.id) }}"
+              style="display:inline;" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="button" style="background-color:red; color:white;">삭제</button>
+        </form>
+        {# TODO!: 신고버튼도 만들면 좋을 듯#}
+    {% endif %}
 {% endblock %}
