@@ -30,7 +30,7 @@ def register():
         db.commit()
         flash('회원가입 완료.', 'success')
         return redirect(url_for('auth.login'))
-    return render_template('account/register.html', form=form)
+    return render_template('auth/register.html', form=form)
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
@@ -45,7 +45,7 @@ def login():
             flash('로그인 성공!', 'success')
             return redirect(url_for('user.dashboard'))
         flash('아이디 또는 비밀번호가 올바르지 않습니다.', 'danger')
-    return render_template('account/login.html', form=form)
+    return render_template('auth/login.html', form=form)
 
 @auth.route('/logout')
 def logout():
