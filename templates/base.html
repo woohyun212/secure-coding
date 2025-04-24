@@ -88,11 +88,20 @@
 <body>
   <nav>
     {% if session.get('user_id') %}
-      <a href="{{ url_for('user.dashboard') }}">대시보드</a>
-      <a href="{{ url_for('user.profile') }}">프로필</a>
-      <a href="{{ url_for('report.report_item') }}">신고하기</a>
-      <a href="{{ url_for('chat.chat_list') }}">채팅방</a>
-      <a href="{{ url_for('auth.logout') }}">로그아웃</a>
+      {% if session.get('is_admin') == 1 %}
+        <a href="{{ url_for('user.dashboard') }}">대시보드</a>
+        <a href="{{ url_for('user.profile') }}">프로필</a>
+        <a href="{{ url_for('admin.manage_users') }}">사용자 관리</a>
+        <a href="{{ url_for('admin.manage_products') }}">상품 관리</a>
+        <a href="{{ url_for('report.report_list') }}">신고 내역</a>
+        <a href="{{ url_for('auth.logout') }}">로그아웃</a>
+      {% else %}
+        <a href="{{ url_for('user.dashboard') }}">대시보드</a>
+        <a href="{{ url_for('user.profile') }}">프로필</a>
+        <a href="{{ url_for('report.report_item') }}">신고하기</a>
+        <a href="{{ url_for('chat.chat_list') }}">채팅방</a>
+        <a href="{{ url_for('auth.logout') }}">로그아웃</a>
+      {% endif %}
     {% else %}
       <a href="{{ url_for('auth.login') }}">로그인</a>
       <a href="{{ url_for('auth.register') }}">회원가입</a>

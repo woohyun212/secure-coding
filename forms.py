@@ -13,6 +13,18 @@ class RegisterForm(FlaskForm):
         Length(min=8, message='8자 이상 입력해야 합니다.')
     ])
 
+class AdminUserForm(FlaskForm):
+    username = StringField('Username', validators=[
+        InputRequired(),
+        Length(min=4, max=20),
+        Regexp(r'^[a-zA-Z0-9_]+$', message='영문자, 숫자, 밑줄(_)만 가능합니다.')
+    ])
+    password = PasswordField('Password', validators=[
+        # InputRequired(),
+        Length(min=8, message='8자 이상 입력해야 합니다.')
+    ])
+    bio = TextAreaField('Bio', validators=[Length(max=200)])
+
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[InputRequired()])
     password = PasswordField('Password', validators=[InputRequired()])

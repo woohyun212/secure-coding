@@ -50,6 +50,13 @@
     <li><strong>소개글:</strong> {{ user.bio or '없음' }}</li>
     <li><strong>상태:</strong> {{ '휴면 상태' if user.is_active == 0 else '활성 상태' }}</li>
   </ul>
+  {% if session['is_admin'] == 1 %}
+    <p>
+      <form method="get" action="{{ url_for('admin.edit_user', user_id=user.id) }}">
+        <button type="submit" class="button">사용자 수정</button>
+      </form>
+    </p>
+  {% endif %}
   <h3>상품 목록</h3>
   {% if products %}
     <ul>

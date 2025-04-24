@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}관리자 - 상품 관리{% endblock %}
+{% block content %}
+    <h2>상품 관리</h2>
+    {% if products %}
+        <table style="width: 100%;">
+            <thead>
+            <tr>
+                <th>수정</th>
+                <th>UUID</th>
+                <th>제목</th>
+                <th>가격</th>
+                <th>판매자</th>
+                <th>상태</th>
+                <th>삭제</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for product in products %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('product.edit_product', product_id=product.id) }}">
+                            <button type="button">수정</button>
+                        </a>
+                    </td>
+                    <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ product.id }}</td>
+                    <td>{{ product.title }}</td>
+                    <td>{{ product.price }}</td>
+                    <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        {{ product.seller_id }}
+                    </td>
+                    <td>{{ '비활성' if product.is_active == 0 else '활성' }}</td>
+                    <td>
+                        <form method="post" action="{{ url_for('admin.delete_product', product_id=product.id) }}"
+                              onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" style="background-color: red; color: white;">삭제</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>등록된 상품이 없습니다.</p>
+    {% endif %}
+{% endblock %}

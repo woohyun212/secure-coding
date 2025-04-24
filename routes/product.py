@@ -4,6 +4,7 @@ from flask import Blueprint, render_template, redirect, url_for, session, flash
 from forms import ProductForm
 from db import get_db
 from decorators import login_and_active_required
+from decorators import admin_required
 
 # Blueprint for product-related routes
 product = Blueprint('product', __name__, url_prefix='/product')
@@ -49,7 +50,7 @@ def edit_product(product_id):
     if not product_data:
         flash('상품을 찾을 수 없습니다.', 'danger')
         return redirect(url_for('user.dashboard'))
-    if product_data['seller_id'] != session['user_id']:
+    if product_data['seller_id'] != session['user_id'] and not session.get('is_admin'):
         flash('수정 권한이 없습니다.', 'danger')
         return redirect(url_for('user.dashboard'))
 

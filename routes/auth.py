@@ -42,6 +42,8 @@ def login():
         user = cursor.fetchone()
         if user and check_password_hash(user['password'], form.password.data):
             session['user_id'] = user['id']
+            if user['is_admin']:
+                session['is_admin'] = user['is_admin']
             flash('로그인 성공!', 'success')
             return redirect(url_for('user.dashboard'))
         flash('아이디 또는 비밀번호가 올바르지 않습니다.', 'danger')

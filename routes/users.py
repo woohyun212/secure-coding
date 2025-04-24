@@ -4,7 +4,7 @@ from db import get_db
 from forms import BioForm, ChangePasswordForm
 from flask_bcrypt import check_password_hash, generate_password_hash
 from decorators import login_and_active_required
-
+from flask import request
 # Blueprint for user-related routes
 user = Blueprint('user', __name__)
 
@@ -35,6 +35,10 @@ def profile():
     # existing bio form
     form = BioForm()
     pwd_form = ChangePasswordForm()
+
+    # Prefill bio field on GET request
+    if request.method == 'GET':
+        form.bio.data = current_user['bio']
 
     if form.validate_on_submit():
         cursor.execute("UPDATE user SET bio = ? WHERE id = ?", (form.bio.data, current_user['id']))
