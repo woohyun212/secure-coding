@@ -5,6 +5,11 @@ from flask import session
 from db import get_db
 import re
 
+import time
+
+# In-memory per-user timestamp log for rate limiting (20 msgs per 60s)
+message_timestamps = {}  # dict mapping user_id to list of send timestamps
+
 
 def is_valid_message(message):
     # 메시지 길이 검사
@@ -43,6 +48,18 @@ def handle_send_message_event(data):
     Handler for 'send_message' events: assigns
     a unique message_id and broadcasts to all clients.
     """
+    # ── manual rate-limit: max 20 messages per 60 seconds per user
+    user_id = session.get('user_id')
+    now = time.time()
+    timestamps = message_timestamps.setdefault(user_id, [])
+    # purge timestamps older than 60 seconds
+    timestamps = [t for t in timestamps if now - t < 60]
+    if len(timestamps) >= 20:
+        # rate limit exceeded: notify client then drop
+        emit('rate_limit_exceeded', {'message': '메시지 전송 한도를 초과했습니다.'})
+        return
+    timestamps.append(now)
+    message_timestamps[user_id] = timestamps
     content = data.get('message', '')
     # Validate content length and allowed chars
     if not is_valid_message(content)[0]:
@@ -78,6 +95,16 @@ def handle_private_message_event(data):
     Handler for private messages: logs the message to the DB and emits to recipient's room.
     Expects data['sender_id'], data['recipient_id'], and data['message'].
     """
+    # ── manual rate-limit: max 20 messages per 60 seconds per user
+    user_id = session.get('user_id')
+    now = time.time()
+    timestamps = message_timestamps.setdefault(user_id, [])
+    timestamps = [t for t in timestamps if now - t < 60]
+    if len(timestamps) >= 20:
+        emit('rate_limit_exceeded', {'message': '메시지 전송 한도를 초과했습니다.'})
+        return
+    timestamps.append(now)
+    message_timestamps[user_id] = timestamps
     content = data.get('message', '')
     if not is_valid_message(content)[0]:
         # ignore
