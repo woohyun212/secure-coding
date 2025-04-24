@@ -21,7 +21,7 @@ def dashboard():
     cursor = db.cursor()
     cursor.execute("SELECT * FROM user WHERE id = ?", (session['user_id'],))
     current_user = cursor.fetchone()
-    cursor.execute("SELECT * FROM product")
+    cursor.execute("SELECT * FROM product WHERE is_active = 1")
     all_products = cursor.fetchall()
     return render_template('dashboard.html', user=current_user, products=all_products)
 
