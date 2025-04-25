@@ -11,6 +11,12 @@ transactions = Blueprint('transactions', __name__, url_prefix='/transactions')
 @login_and_active_required
 def transfer():
     form = TransferForm()
+    # Fetch current user's balance
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT balance FROM user WHERE id = ?", (session['user_id'],))
+    row = cursor.fetchone()
+    balance = row['balance'] if row else 0
     if form.validate_on_submit():
         db = get_db()
         cursor = db.cursor()
@@ -51,7 +57,7 @@ def transfer():
         flash('송금이 완료되었습니다.', 'success')
         return redirect(url_for('transactions.history'))
 
-    return render_template('transactions/transfer.html', form=form)
+    return render_template('transactions/transfer.html', form=form, balance=balance)
 
 @transactions.route('/history')
 @login_and_active_required
@@ -59,15 +65,32 @@ def history():
     db = get_db()
     cursor = db.cursor()
     user_id = session['user_id']
-    cursor.execute(
-        """
-        SELECT id, sender_id, recipient_id, amount, timestamp, status
+
+    # Fetch both transfers and deposits in one union query, ordered by timestamp
+    cursor.execute("""
+        SELECT
+          CASE WHEN sender_id = ? THEN '송금' ELSE '입금' END AS type,
+          id,
+          sender_id,
+          recipient_id,
+          amount,
+          timestamp,
+          status
         FROM transactions
         WHERE sender_id = ? OR recipient_id = ?
+        UNION ALL
+        SELECT
+          '충전' AS type,
+          id,
+          NULL AS sender_id,
+          user_id AS recipient_id,
+          amount,
+          timestamp,
+          status
+        FROM deposit_requests
+        WHERE user_id = ? AND status = 'approved'
         ORDER BY timestamp DESC
-        """,
-        (user_id, user_id)
-    )
+    """, (user_id, user_id, user_id, user_id))
     records = cursor.fetchall()
     return render_template('transactions/history.html', transactions=records)
 

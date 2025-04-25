@@ -7,7 +7,7 @@
     <a href="{{ url_for('transactions.transfer') }}">↩︎ 송금하기</a>
   </p>
   {% if transactions %}
-    <table>
+    <table style="width: 100%;">
       <thead>
         <tr>
           <th>거래 ID</th>
@@ -22,15 +22,25 @@
         {% for tx in transactions %}
           <tr>
             <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-              {{ tx.id }}
+              {{ tx.type }}
             </td>
-            <td>
-              <a href="{{ url_for('user.view_profile', user_id=tx.sender_id) }}">{{ tx.sender_id }}</a>
-            </td>
-            <td>
+            {% if tx.sender_id %}
+              <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                <a href="{{ url_for('user.view_profile', user_id=tx.sender_id) }}">{{ tx.sender_id }}</a>
+              </td>
+            {% else %}
+              <td>-</td>
+            {% endif %}
+            <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
               <a href="{{ url_for('user.view_profile', user_id=tx.recipient_id) }}">{{ tx.recipient_id }}</a>
             </td>
-            <td>{{ tx.amount }}</td>
+            <td>
+              {% if tx.type == '송금' and tx.sender_id == session['user_id'] %}
+                -{{ tx.amount }}
+              {% else %}
+                {{ tx.amount }}
+              {% endif %}
+            </td>
             <td>{{ tx.timestamp }}</td>
             <td>{{ tx.status }}</td>
           </tr>
