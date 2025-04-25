@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}송금하기{% endblock %}
+
+{% block content %}
+  <h2>송금하기</h2>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul class="flashes">
+        {% for category, message in messages %}
+          <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  <form method="post">
+    {{ form.hidden_tag() }}
+    <div>
+      {{ form.recipient_id.label }}<br>
+      {{ form.recipient_id(size=36) }}
+    </div>
+    <div>
+      {{ form.amount.label }}<br>
+      {{ form.amount(size=10) }}
+    </div>
+    <div style="margin-top:10px;">
+      <button type="submit">송금하기</button>
+      <a href="{{ url_for('transactions.history') }}" style="margin-left: 8px;">내역 보기</a>
+    </div>
+  </form>
+{% endblock %}

@@ -1,0 +1,43 @@
+
+{% extends "base.html" %}
+{% block title %}송금 내역{% endblock %}
+{% block content %}
+  <h2>송금 내역</h2>
+  <p>
+    <a href="{{ url_for('transactions.transfer') }}">↩︎ 송금하기</a>
+  </p>
+  {% if transactions %}
+    <table>
+      <thead>
+        <tr>
+          <th>거래 ID</th>
+          <th>송금인</th>
+          <th>수신인</th>
+          <th>금액</th>
+          <th>시간</th>
+          <th>상태</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tx in transactions %}
+          <tr>
+            <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+              {{ tx.id }}
+            </td>
+            <td>
+              <a href="{{ url_for('user.view_profile', user_id=tx.sender_id) }}">{{ tx.sender_id }}</a>
+            </td>
+            <td>
+              <a href="{{ url_for('user.view_profile', user_id=tx.recipient_id) }}">{{ tx.recipient_id }}</a>
+            </td>
+            <td>{{ tx.amount }}</td>
+            <td>{{ tx.timestamp }}</td>
+            <td>{{ tx.status }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>거래 내역이 없습니다.</p>
+  {% endif %}
+{% endblock %}

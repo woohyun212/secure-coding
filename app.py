@@ -57,6 +57,7 @@ app.register_blueprint(product)
 app.register_blueprint(report)
 app.register_blueprint(chat)
 app.register_blueprint(admin)
+app.register_blueprint(transactions)
 
 @app.before_request
 def make_session_permanent():

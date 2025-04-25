@@ -1,4 +1,3 @@
-# db.py
 import sqlite3
 from flask import g, current_app
 
@@ -27,7 +26,8 @@ def init_db():
                 password TEXT NOT NULL,
                 bio TEXT,
                 is_active INTEGER NOT NULL DEFAULT 1,
-                is_admin INTEGER NOT NULL DEFAULT 0
+                is_admin INTEGER NOT NULL DEFAULT 0,
+                balance INTEGER NOT NULL DEFAULT 0
             )
         """)
         cursor.execute("""
@@ -60,6 +60,17 @@ def init_db():
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        # NOTE: Changed `transaction` to `user_transaction` here to avoid reserved keyword conflict
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS transactions (
+                id TEXT PRIMARY KEY,
+                sender_id TEXT NOT NULL,
+                recipient_id TEXT NOT NULL,
+                amount INTEGER NOT NULL,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                status TEXT NOT NULL DEFAULT 'completed'
+            )
+        """)
 
         # Ensure new columns exist when migrating existing DB
         try:
@@ -68,6 +79,10 @@ def init_db():
             pass
         try:
             cursor.execute("ALTER TABLE user ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("ALTER TABLE user ADD COLUMN balance INTEGER NOT NULL DEFAULT 0")
         except sqlite3.OperationalError:
             pass
         try:

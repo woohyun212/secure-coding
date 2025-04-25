@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, TextAreaField, DecimalField
+from wtforms import StringField, PasswordField, TextAreaField, DecimalField, IntegerField
 from wtforms.validators import InputRequired, Length, Regexp, DataRequired, EqualTo, NumberRange
 from flask_wtf.file import FileField, FileAllowed
 
@@ -55,3 +55,13 @@ class ChangePasswordForm(FlaskForm):
         ]
     )
     confirm_new_password = PasswordField('비밀번호 확인', validators=[DataRequired()])
+
+class TransferForm(FlaskForm):
+    recipient_id = StringField('수신인 ID', render_kw={"placeholder": "UUID 입력"}, validators=[
+        InputRequired(),
+        Length(min=36, max=36, message='유효한 사용자 ID를 입력하세요.')
+    ])
+    amount = IntegerField('금액', render_kw={"placeholder": "금액 입력"}, validators=[
+        InputRequired(),
+        NumberRange(min=1, message='송금액은 1원 이상이어야 합니다.')
+    ])
