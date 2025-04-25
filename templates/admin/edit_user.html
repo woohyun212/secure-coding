@@ -5,15 +5,15 @@
   <form method="post">
     {{ form.hidden_tag() }}
     <div>
-      {{ form.username.label }}<br>
+      사용자 이름<br>
       {{ form.username(size=40) }}
     </div>
     <div>
-      {{ form.password.label }}<br>
+      비밀번호<br>
       {{ form.password(size=40) }}
     </div>
     <div>
-      {{ form.bio.label }}<br>
+      소개글<br>
       {{ form.bio(rows=3, cols=40) }}
     </div>
     <div style="margin-top:10px;">
