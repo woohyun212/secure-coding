@@ -37,6 +37,8 @@ def init_db():
                 description TEXT NOT NULL,
                 price TEXT NOT NULL,
                 seller_id TEXT NOT NULL,
+                image_url TEXT,
+                trade_status TEXT NOT NULL DEFAULT 'available',
                 is_active INTEGER NOT NULL DEFAULT 1
             )
         """)
@@ -74,6 +76,14 @@ def init_db():
             pass
         try:
             cursor.execute("ALTER TABLE product ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("ALTER TABLE product ADD COLUMN image_url TEXT")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("ALTER TABLE product ADD COLUMN trade_status TEXT NOT NULL DEFAULT 'available'")
         except sqlite3.OperationalError:
             pass
 

@@ -17,17 +17,31 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
+
+import os
+
+# 애플리케이션 폴더 기준으로 static/uploads 디렉터리에 파일 저장
+basedir = os.path.abspath(os.path.dirname(__file__))
+upload_folder = os.path.join(basedir, 'static', 'uploads')
+os.makedirs(upload_folder, exist_ok=True)
+
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
 socketio = SocketIO(app)
 csrf = CSRFProtect(app)
 limiter = Limiter(get_remote_address, app=app)
-
+# 시크릿 키
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
+# 디버그
+app.config['DEBUG'] = os.environ.get('FLASK_DEBUG', 'False') == 'True'
+# 세션 쿠키
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', 'False') == 'True'
-app.config['DEBUG'] = os.environ.get('FLASK_DEBUG', 'False') == 'True'
+# 세션 시간
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
+# 업로드 폴더
+app.config['UPLOAD_FOLDER'] = upload_folder
+
 
 app.teardown_appcontext(close_connection)
 # socket

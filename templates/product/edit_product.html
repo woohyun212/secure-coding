@@ -2,7 +2,7 @@
 {% block title %}상품 수정{% endblock %}
 {% block content %}
   <h2>상품 수정</h2>
-  <form method="post">
+  <form method="post" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
     <div>
       {{ form.title.label }}<br>
@@ -15,6 +15,18 @@
     <div>
       {{ form.price.label }}<br>
       {{ form.price(size=30) }}
+    </div>
+    {% if product.image_url %}
+      <div style="margin-top:10px;">
+        <label>현재 이미지:</label><br>
+        <img src="{{ url_for('static', filename='uploads/' ~ product.image_url) }}"
+             alt="상품 이미지"
+             style="max-width:200px; max-height:200px;">
+      </div>
+    {% endif %}
+    <div style="margin-top:10px;">
+      {{ form.image.label }}<br>
+      {{ form.image() }}
     </div>
     <div style="margin-top: 10px;">
       <button type="submit">수정하기</button>

@@ -1,6 +1,8 @@
 # product.py
 import uuid
-from flask import Blueprint, render_template, redirect, url_for, session, flash
+import os
+from flask import Blueprint, render_template, redirect, url_for, session, flash, current_app, request
+from werkzeug.utils import secure_filename
 from forms import ProductForm
 from db import get_db
 from decorators import login_and_active_required
@@ -14,12 +16,23 @@ product = Blueprint('product', __name__, url_prefix='/product')
 def new_product():
     form = ProductForm()
     if form.validate_on_submit():
+        # Handle image upload
+        image_file = form.image.data
+        image_url = None
+        if image_file:
+            # Generate a unique filename using UUID and preserve extension
+            ext = os.path.splitext(image_file.filename)[1]
+            filename = f"{uuid.uuid4().hex}{ext}"
+            upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+            image_file.save(upload_path)
+            image_url = filename
+
         db = get_db()
         cursor = db.cursor()
         product_id = str(uuid.uuid4())
         cursor.execute(
-            "INSERT INTO product (id, title, description, price, seller_id) VALUES (?, ?, ?, ?, ?)",
-            (product_id, form.title.data, form.description.data, form.price.data, session['user_id'])
+            "INSERT INTO product (id, title, description, price, seller_id, image_url) VALUES (?, ?, ?, ?, ?, ?)",
+            (product_id, form.title.data, form.description.data, form.price.data, session['user_id'], image_url)
         )
         db.commit()
         flash('상품이 등록되었습니다.', 'success')
@@ -54,6 +67,8 @@ def edit_product(product_id):
         flash('수정 권한이 없습니다.', 'danger')
         return redirect(url_for('user.dashboard'))
 
+    existing_image = product_data.get('image_url')
+
     # Pre-populate form
     form = ProductForm(data={
         'title': product_data['title'],
@@ -62,9 +77,20 @@ def edit_product(product_id):
     })
 
     if form.validate_on_submit():
+        # Handle new image upload
+        image_file = form.image.data
+        image_url = existing_image
+        if image_file:
+            # Generate a unique filename using UUID and preserve extension
+            ext = os.path.splitext(image_file.filename)[1]
+            filename = f"{uuid.uuid4().hex}{ext}"
+            upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+            image_file.save(upload_path)
+            image_url = filename
+
         cursor.execute(
-            "UPDATE product SET title = ?, description = ?, price = ? WHERE id = ?",
-            (form.title.data, form.description.data, form.price.data, product_id)
+            "UPDATE product SET title = ?, description = ?, price = ?, image_url = ? WHERE id = ?",
+            (form.title.data, form.description.data, form.price.data, image_url, product_id)
         )
         db.commit()
         flash('상품이 수정되었습니다.', 'success')
@@ -87,6 +113,14 @@ def delete_product(product_id):
         flash('삭제 권한이 없습니다.', 'danger')
         return redirect(url_for('user.dashboard'))
 
+    # Delete image file from server
+    image_url = product_data['image_url']
+    if image_url:
+        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], image_url)
+        try:
+            os.remove(file_path)
+        except OSError:
+            pass
     # Delete the product
     cursor.execute("DELETE FROM product WHERE id = ?", (product_id,))
     db.commit()
