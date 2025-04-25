@@ -35,7 +35,7 @@ def init_db():
                 id TEXT PRIMARY KEY,
                 title TEXT NOT NULL,
                 description TEXT NOT NULL,
-                price TEXT NOT NULL,
+                price INTEGER NOT NULL,
                 seller_id TEXT NOT NULL,
                 image_url TEXT,
                 trade_status TEXT NOT NULL DEFAULT 'available',
@@ -86,5 +86,35 @@ def init_db():
             cursor.execute("ALTER TABLE product ADD COLUMN trade_status TEXT NOT NULL DEFAULT 'available'")
         except sqlite3.OperationalError:
             pass
+
+        # Migrate price column to INTEGER if currently not INTEGER
+        cursor.execute("PRAGMA table_info(product)")
+        cols = cursor.fetchall()
+        for col in cols:
+            if col['name'] == 'price' and col['type'].upper() != 'INTEGER':
+                # Rename old table
+                cursor.execute("ALTER TABLE product RENAME TO product_old")
+                # Recreate with INTEGER price
+                cursor.execute("""
+                    CREATE TABLE product (
+                        id TEXT PRIMARY KEY,
+                        title TEXT NOT NULL,
+                        description TEXT NOT NULL,
+                        price INTEGER NOT NULL,
+                        seller_id TEXT NOT NULL,
+                        image_url TEXT,
+                        trade_status TEXT NOT NULL DEFAULT 'available',
+                        is_active INTEGER NOT NULL DEFAULT 1
+                    )
+                """)
+                # Copy data, casting price to integer
+                cursor.execute("""
+                    INSERT INTO product (id, title, description, price, seller_id, image_url, trade_status, is_active)
+                    SELECT id, title, description, CAST(price AS INTEGER), seller_id, image_url, trade_status, is_active
+                    FROM product_old
+                """)
+                # Drop old table
+                cursor.execute("DROP TABLE product_old")
+                break
 
         db.commit()

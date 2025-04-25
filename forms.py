@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, TextAreaField
-from wtforms.validators import InputRequired, Length, Regexp, DataRequired, EqualTo
+from wtforms import StringField, PasswordField, TextAreaField, DecimalField
+from wtforms.validators import InputRequired, Length, Regexp, DataRequired, EqualTo, NumberRange
+from flask_wtf.file import FileField, FileAllowed
 
 class RegisterForm(FlaskForm):
     username = StringField('Username', validators=[
@@ -35,7 +36,10 @@ class BioForm(FlaskForm):
 class ProductForm(FlaskForm):
     title = StringField('Title', validators=[InputRequired()])
     description = TextAreaField('Description', validators=[InputRequired()])
-    price = StringField('Price', validators=[InputRequired()])
+    price = DecimalField('Price', validators=[InputRequired(), NumberRange(min=0, message='가격은 0 이상의 숫자여야 합니다.')])
+    image = FileField('상품 이미지', validators=[
+        FileAllowed(['jpg', 'jpeg', 'png', 'gif'], '이미지 파일(jpg, jpeg, png, gif)만 업로드할 수 있습니다.')
+    ])
 
 class ReportForm(FlaskForm):
     target_id = StringField('Target ID', validators=[InputRequired()])

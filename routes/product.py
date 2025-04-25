@@ -32,7 +32,7 @@ def new_product():
         product_id = str(uuid.uuid4())
         cursor.execute(
             "INSERT INTO product (id, title, description, price, seller_id, image_url) VALUES (?, ?, ?, ?, ?, ?)",
-            (product_id, form.title.data, form.description.data, form.price.data, session['user_id'], image_url)
+            (product_id, form.title.data, form.description.data, int(form.price.data), session['user_id'], image_url)
         )
         db.commit()
         flash('상품이 등록되었습니다.', 'success')
@@ -90,7 +90,7 @@ def edit_product(product_id):
 
         cursor.execute(
             "UPDATE product SET title = ?, description = ?, price = ?, image_url = ? WHERE id = ?",
-            (form.title.data, form.description.data, form.price.data, image_url, product_id)
+            (form.title.data, form.description.data, int(form.price.data), image_url, product_id)
         )
         db.commit()
         flash('상품이 수정되었습니다.', 'success')
