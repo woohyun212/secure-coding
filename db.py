@@ -71,6 +71,15 @@ def init_db():
                 status TEXT NOT NULL DEFAULT 'completed'
             )
         """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS deposit_requests (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                amount INTEGER NOT NULL,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                status TEXT NOT NULL DEFAULT 'pending'
+            )
+        """)
 
         # Ensure new columns exist when migrating existing DB
         try:

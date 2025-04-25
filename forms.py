@@ -65,3 +65,15 @@ class TransferForm(FlaskForm):
         InputRequired(),
         NumberRange(min=1, message='송금액은 1원 이상이어야 합니다.')
     ])
+
+
+# 포인트 충전 요청 폼
+class DepositRequestForm(FlaskForm):
+    amount = IntegerField(
+        '충전 요청 금액(원)',
+        render_kw={"placeholder": "충전할 금액을 입력하세요"},
+        validators=[
+            InputRequired(message='충전할 금액을 입력해주세요.'),
+            NumberRange(min=1, message='충전 금액은 1원 이상이어야 합니다.')
+        ]
+    )

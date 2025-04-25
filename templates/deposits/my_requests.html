@@ -1,0 +1,50 @@
+
+
+{% extends "base.html" %}
+
+{% block title %}내 충전 요청 내역{% endblock %}
+
+{% block content %}
+  <h2>내 충전 요청 내역</h2>
+
+  <p>
+    <a href="{{ url_for('deposits.request_deposit') }}">↩︎ 충전 요청하기</a>
+  </p>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul class="flashes">
+        {% for category, message in messages %}
+          <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  {% if requests %}
+    <table>
+      <thead>
+        <tr>
+          <th>요청 ID</th>
+          <th>금액(원)</th>
+          <th>시간</th>
+          <th>상태</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for req in requests %}
+          <tr>
+            <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+              {{ req.id }}
+            </td>
+            <td>{{ req.amount }}</td>
+            <td>{{ req.timestamp }}</td>
+            <td>{{ req.status }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>충전 요청 내역이 없습니다.</p>
+  {% endif %}
+{% endblock %}

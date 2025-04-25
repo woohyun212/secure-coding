@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}관리자 - 충전 요청 관리{% endblock %}
+
+{% block content %}
+  <h2>충전 요청 관리</h2>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul class="flashes">
+        {% for category, message in messages %}
+          <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  {% if requests %}
+    <table>
+      <thead>
+        <tr>
+          <th>요청 ID</th>
+          <th>요청자</th>
+          <th>금액(원)</th>
+          <th>시간</th>
+          <th>상태</th>
+          <th>처리</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for req in requests %}
+          <tr>
+            <td style="max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+              {{ req.id }}
+            </td>
+            <td>
+              <a href="{{ url_for('user.view_profile', user_id=req.user_id) }}">
+                {{ req.user_id }}
+              </a>
+            </td>
+            <td>{{ req.amount }}</td>
+            <td>{{ req.timestamp }}</td>
+            <td>{{ req.status }}</td>
+            <td>
+              {% if req.status == 'pending' %}
+                <form method="post" action="{{ url_for('deposits.approve_request', request_id=req.id) }}" style="display:inline;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit">승인</button>
+                </form>
+                <form method="post" action="{{ url_for('deposits.reject_request', request_id=req.id) }}" style="display:inline;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit">거절</button>
+                </form>
+              {% else %}
+                <em>완료</em>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>충전 요청이 없습니다.</p>
+  {% endif %}
+{% endblock %}
